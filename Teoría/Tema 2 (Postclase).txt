@@ -1,0 +1,188 @@
+Tema 2 (Postclase):
+1. Encapsulación y Ocultación
+Buscan: Agrupar datos y comportamientos relacionados (encapsulación) y restringir el acceso directo a los detalles internos de implementación (ocultación).
+
+Ventajas: * Mantenibilidad: Puedes cambiar el interior de una clase sin romper el código que la usa.
+
+Control: Evitas que valores inválidos entren en tus variables.
+
+Reducción de complejidad: El usuario de la clase solo ve lo necesario.
+
+2. Interfaz Pública
+Es el conjunto de métodos y constantes que una clase expone al "mundo exterior". Es el contrato de qué puede hacer el objeto. La ocultación asegura que la interfaz pública sea mínima y limpia, dejando los detalles sucios en la parte privada.
+
+3. Diseño de la Interfaz Pública
+Hay que diseñarla con cuidado porque es muy difícil cambiarla una vez que otros programadores están usando tu clase. Si cambias un método público, rompes todo el código que dependía de él.
+
+4. Invariantes de Clase
+Son condiciones que siempre deben ser ciertas para que un objeto sea válido (ej: el radio de un círculo nunca puede ser negativo). La ocultación nos ayuda porque impide que alguien externo cambie un valor directamente y rompa esa regla.
+
+5. Ejemplo Clase Punto (Java)
+
+public class Punto {
+    private double x, y; // Ocultación (private)
+
+    public double calcularDistanciaAOrigen() { // Interfaz pública
+        return Math.sqrt(x * x + y * y);
+    }
+}
+Interfaz pública: En este caso, solo el método calcularDistanciaAOrigen().
+
+public: Accesible desde cualquier otra clase.
+
+private: Solo accesible desde dentro de la propia clase.
+
+6. ¿A quién se aplican los modificadores?
+En Java se aplican a clases (con restricciones), atributos, métodos y constructores.
+
+7. Tipos de Visibilidad
+Java: public, private, protected (herencia) y default (paquete).
+
+Otros: Algunos lenguajes como Python no tienen privacidad real (usan convenciones como _variable), y otros como C++ tienen friend para dar acceso selectivo.
+
+8. Privado: ¿Clase o Instancia?
+En Java, los miembros privados están ocultos para (a) otras clases. Una instancia de Punto sí puede acceder a los atributos privados de otra instancia de Punto.
+
+Java
+
+public double calcularDistanciaAPunto(Punto otro) {
+    // Puedo acceder a otro.x aunque sea private porque estoy dentro de la clase Punto
+    double dx = this.x - otro.x; 
+    return Math.sqrt(dx * dx + (this.y - otro.y) * (this.y - otro.y));
+}
+9. Getters y Setters
+Son métodos públicos para leer (get) o modificar (set) el valor de un atributo privado de forma controlada.
+
+10. ¿Seguridad contra Hackers?
+No. Se refiere a seguridad lógica o integridad del diseño. Evita "accidentes" de programación donde un estado inconsistente corrompa el flujo del programa.
+
+11. Miembro de Instancia vs. Clase
+Instancia: Cada objeto tiene su propia copia (ej: x e y de cada punto).
+
+Clase (static): Es compartido por todos los objetos de esa clase. Sí, también se pueden ocultar con private.
+
+12. Constructores Privados
+Sí, tienen mucho sentido. Se usan en patrones de diseño como Singleton (solo una instancia) o en clases de utilidades que no deben instanciarse (como Math).
+
+13. Miembros de Clase en Punto
+Java
+
+public class Punto {
+    private double x, y;
+    private static double xMax = 0, yMax = 0; // Miembros de clase ocultos
+
+    public Punto(double x, double y) {
+        this.x = x; this.y = y;
+        if (x > xMax) xMax = x;
+        if (y > yMax) yMax = y;
+    }
+}
+14. Método Factoría
+Java
+
+public static Punto crearPuntoRedondeado(double x, double y) {
+    return new Punto(Math.round(x), Math.round(y));
+}
+Sí, se usa static porque el método debe poder llamarse antes de que exista el objeto.
+
+15. Cambio de Implementación (Array)
+Java
+
+public class Punto {
+    private double[] coords = new double[2]; // Cambio interno
+
+    // La interfaz pública se mantiene idéntica
+    public double getX() { return coords[0]; }
+    public void setX(double x) { coords[0] = x; }
+    // ... calcularDistancia sigue funcionando igual externamente
+}
+16. ¿Atributo público o Getter/Setter?
+Es mejor siempre privado. Incluso con getter/setter, mantienes el control. Si mañana decides que el setter debe validar que x no sea mayor a 1000, solo cambias el código en un lugar. Con un atributo público, tendrías que revisar todo el proyecto.
+
+17. Inmutabilidad
+Clase Inmutable: Sus objetos no pueden cambiar de estado una vez creados (ej: String).
+
+Método modificador: Un método que cambia el estado (setter). No siempre se llama "set".
+
+Ventajas: Son intrínsecamente seguros en entornos multihilo y más fáciles de entender.
+
+18. ¿Setters siempre?
+No. Si la clase es inmutable o si el atributo no debe cambiar tras la creación, no pongas setter. "Menos es más" en diseño de interfaces.
+
+19. La clase String
+Es inmutable. Al concatenar ("a" + "b"), se crea un objeto String totalmente nuevo. Para concatenar muchas veces, se debe usar StringBuilder, que es mutable y mucho más eficiente en memoria.
+
+20. Comparación de Objetos
+Identidad (==): Comprueba si ambos apuntan a la misma dirección de memoria.
+
+Contenido (equals): Comprueba si los valores internos son iguales.
+
+Java equals: Por defecto (en Object) hace lo mismo que ==. Debes sobrescribirlo.
+
+Cadenas: Siempre con .equals().
+
+21. Clases Wrapper (Envoltorios)
+Son clases que representan tipos primitivos como objetos (ej: Integer para int).
+
+Autoboxing: Java lo hace automáticamente.
+
+Ventajas: Permiten usar primitivos en colecciones (como ArrayList) que solo aceptan objetos.
+
+Otros lenguajes: En Python o Ruby, todo es un objeto, por lo que no necesitan wrappers.
+
+22. Tipos Enumerados (enum)
+Es un tipo que define un conjunto fijo de constantes. En Java, los enum son clases especiales, lo que permite que tengan atributos y métodos, mejorando mucho la encapsulación sobre los simples enteros de C.
+
+23. Ejercicio Enum Mes
+Java
+
+public enum Mes {
+    ENERO(31, 1), FEBRERO(28, 2), MARZO(31, 3), /*...*/ DICIEMBRE(31, 12);
+
+    private final int dias;
+    private final int ordinal;
+
+    private Mes(int dias, int ordinal) { // Constructor privado
+        this.dias = dias;
+        this.ordinal = ordinal;
+    }
+
+    public int getDias() { return dias; }
+    public int getOrdinal() { return ordinal; }
+}
+24. Métodos Estacionales en Mes
+Java
+
+public boolean esDePrimavera(boolean enHemisferioNorte) {
+    if (enHemisferioNorte) {
+        return this == MARZO || this == ABRIL || this == MAYO || this == JUNIO;
+    } else {
+        return this == SEPTIEMBRE || this == OCTUBRE || this == NOVIEMBRE || this == DICIEMBRE;
+    }
+}
+// Los demás métodos (Verano, Otoño, Invierno) seguirían una lógica similar.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
