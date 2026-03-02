@@ -1,0 +1,127 @@
+Tema 3 (Postclase)
+
+1. Control de errores en C (sin excepciones)En C, al no haber excepciones, dependemos de "trucos" en el valor de retorno o variables globales.
+
+Opción A (Valor centinela): Retornar un valor imposible (como -1.0) para indicar error.
+
+double raiz(double n) {
+    if (n < 0) return -1.0; // Valor centinela
+    return sqrt(n);
+}
+
+Opción B (Paso por referencia y código de estado): Retornar un booleano o entero de éxito/error y devolver el resultado real mediante un puntero.
+
+int raiz(double n, double *resultado) {
+    if (n < 0) return 0; // Error
+    *resultado = sqrt(n);
+    return 1; // Éxito
+}
+
+2. ¿Qué es una "excepción"?.- Es un evento inesperado que ocurre durante la ejecución de un programa y que interrumpe el flujo normal de las instrucciones. Objetivo al implementarlas: Informar que ha ocurrido un problema que el método actual no sabe o no debe resolver. Objetivo al llamarlas: Separar el código de la lógica de negocio del código de manejo de errores, haciendo el programa más limpio.
+
+3. Ejemplo Raíz en Java
+public class Calculadora {
+    public double raiz(double n) {
+        if (n < 0) {
+            throw new IllegalArgumentException("No se puede calcular la raíz de un negativo");
+        }
+        return Math.sqrt(n);
+    }
+
+    public static void main(String[] args) {
+        Calculadora calc = new Calculadora();
+        try {
+            System.out.println(calc.raiz(-5));
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error detectado: " + e.getMessage());
+        }
+    }
+}
+
+4. Lanzar, Capturar y PropagarLanzar (throw): Es el acto de crear el objeto excepción y enviarlo al sistema.
+
+Controlar/Capturar (catch): Es detener la excepción para procesarla y evitar que el programa aborte.
+
+Propagar: Si un método no captura la excepción, esta "salta" al método que lo llamó.
+
+Pila de llamadas: Las funciones en la pila se van cerrando abruptamente una tras otra. No se reanudan; el control pasa directamente al bloque catch más cercano en la pila. Si nadie la captura, el programa muere.
+
+5. Ventajas frente a C: La "propagación natural" permite que el error "flote" hacia arriba hasta encontrar a alguien que sepa qué hacer. En C, si tienes 10 llamadas anidadas, cada una de las 10 funciones debe tener un if (error) para pasar el mensaje. En Java, solo el que lanza y el que captura necesitan saber del error; los intermedios son agnósticos.
+
+6. Excepciones como Objetos: 
+En POO, las excepciones son objetos (instancias de clases como Exception).
+Encapsulación: Permiten guardar mucha información dentro (mensaje, código de error, estado del sistema).
+Personalización: Sí, podemos crear nuestras propias clases (ej: class SaldoInsuficienteException extends Exception).
+
+7. Información esencial en el objeto Excepción
+A diferencia del simple "-1" de C, un objeto excepción lleva:
+Mensaje descriptivo: getMessage().
+Traza de la pila (Stack Trace): Lista exacta de archivos y líneas de código por donde pasó el error.
+Tipo de excepción: El propio nombre de la clase ya indica qué pasó.
+
+8. Bloques catch múltiples
+Sí, se pueden tener varios. Sin embargo, solo se ejecuta el primero que coincida con el tipo de excepción lanzada (o un padre de la misma).
+
+9. El bloque finallyGarantiza la ejecución de código sin importar si hubo error o no.
+Con catch: try { ... } catch { ... } finally { cerrarRecurso(); }
+Sin catch: try { ... } finally { cerrarRecurso(); } (la excepción sigue propagándose, pero antes se ejecuta el finally).
+
+10. ¿Se ejecuta siempre finally?
+Sí, siempre. Incluso si hay un return dentro del try o del catch, el bloque finally se ejecuta justo antes de que el método devuelva el control.
+
+11. Controladas vs. No Controladas
+
+Controladas (Checked): Heredan de Exception. El compilador te obliga a capturarlas o declararlas (ej: IOException, SQLException).
+
+No controladas (Unchecked): Heredan de RuntimeException. El compilador no te obliga a nada (ej: NullPointerException, ArithmeticException).
+
+Situación: Excepción Controlada                Situación: Excepción No Controlada
+Error al abrir un fichero (externo)            División por cero (error lógico)
+Problemas de red                               Acceso a índice fuera de rango
+Base de datos caída                            Pasar un parámetro null donde no debe
+Formato de número incorrecto al leer teclado   Error de lógica de negocio insalvable
+
+12. ¿Qué es throws?
+Es una declaración en la firma del método que avisa: "Este método puede lanzar esta excepción, el que me llame debe estar preparado". Es la alternativa a try-catch cuando prefieres propagar la responsabilidad.
+
+13. Ejemplo throws y finally
+
+public void leerFichero(String ruta) throws FileNotFoundException {
+    Scanner sc = null;
+    try {
+        sc = new Scanner(new File(ruta));
+        // ... leer ...
+    } finally {
+        if (sc != null) sc.close(); // Siempre cerramos, aunque falle
+    }
+}
+
+
+14. throws con RuntimeException
+Se puede poner, pero es opcional. El llamador no está obligado a poner un try-catch. Solo tiene sentido como documentación para que otros programadores sepan qué errores "típicos" podrían ocurrir.
+
+15. Recomendación de uso
+Controladas: Cuando el error es recuperable o externo al control del programador (red, ficheros).
+
+No controladas: Cuando el error es un fallo de programación (bugs) o algo que no debería ocurrir si el código está bien hecho.
+
+Otros lenguajes: Python o C++ solo tienen "no controladas" (no te obligan a capturar). Java es de los pocos que usa activamente las controladas.
+
+16. Lanzar dentro del catchTiene mucho sentido. Se puede relanzar la misma:
+
+catch (Exception e) {
+    log(e); // Registramos el error en un log
+    throw e; // Volvemos a lanzarla para que el jefe se entere
+}
+O lanzar una nueva (encapsular).
+
+17. Excepciones con "Causa"
+
+Es capturar una excepción técnica y envolverla en una semántica.
+try {
+    conectarBD();
+} catch (SQLException e) {
+    // SQLException es la CAUSA de nuestra nueva excepción
+    throw new ErrorDeAccesoAlSistema("No se pudo entrar", e);
+}
+¿Se ve por pantalla? Sí, en el stack trace aparecerá: "ErrorDeAccesoAlSistema: No se pudo entrar. Caused by: java.sql.SQLException: connection refused".
