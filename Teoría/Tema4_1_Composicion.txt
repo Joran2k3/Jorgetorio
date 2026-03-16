@@ -1,0 +1,157 @@
+1. Composición en C
+En C, la composición se logra anidando structs.
+
+C
+#include <stdio.h>
+#include <math.h>
+
+typedef struct {
+    double x, y;
+} Punto;
+
+typedef struct {
+    Punto p1, p2;
+} Linea;
+
+double distancia(Punto a, Punto b) {
+    return sqrt(pow(b.x - a.x, 2) + pow(b.y - a.y, 2));
+}
+
+double longitud(Linea l) {
+    return distancia(l.p1, l.p2);
+}
+2. Transformación a Objetos (Java) e Inmutabilidad
+Para garantizar la inmutabilidad, declaramos los atributos como final y no proporcionamos métodos "setter".
+
+Java
+public final class Punto {
+    private double x, y;
+
+    public Punto(double x, double y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public double distancia(Punto otro) {
+        return Math.sqrt(Math.pow(otro.x - this.x, 2) + Math.pow(otro.y - this.y, 2));
+    }
+}
+
+public final class Linea {
+    private Punto p1, p2;
+
+    public Linea(Punto p1, Punto p2) {
+        this.p1 = p1; // En composición pura, se podría hacer copia defensiva
+        this.p2 = p2;
+    }
+
+    public double getLongitud() {
+        return this.p1.distancia(this.p2);
+    }
+}
+3. Multiplicidad
+La multiplicidad indica cuántos objetos de una clase pueden estar relacionados con un objeto de la otra clase.
+
+De Linea a Punto: 2 (Una línea está compuesta exactamente por 2 puntos).
+
+De Punto a Linea: 0..* (Un punto puede formar parte de ninguna, una o muchas líneas).
+
+4. Composición Fuerte vs. Débil
+Composición Fuerte (Composición): El objeto "hijo" no tiene sentido sin el "padre". Si se destruye el contenedor, se destruyen los contenidos. (Ej: Habitación en una Casa).
+
+Composición Débil (Agregación): Los objetos tienen ciclos de vida independientes. El "hijo" puede sobrevivir si el "padre" desaparece. (Ej: Profesor en un Departamento).
+
+5. ¿Composición o Dependencia?
+Se trata de Dependencia. La composición implica una relación estructural (un atributo de clase), mientras que la dependencia es una relación de uso temporal (parámetros, variables locales o instanciación efímera dentro de un método).
+
+6. Implementación Fuerte vs. Débil
+Fuerte: La Linea crea sus propios puntos (o copias de ellos) para que nadie más tenga la referencia.
+
+Java
+public Linea(double x1, double y1, double x2, double y2) {
+    this.p1 = new Punto(x1, y1);
+    this.p2 = new Punto(x2, y2);
+}
+Débil: La Linea recibe puntos ya creados y guarda la referencia.
+
+Java
+public Linea(Punto p1, Punto p2) {
+    this.p1 = p1;
+    this.p2 = p2;
+}
+7. Destrucción de objetos en Java
+En Java no se observa una destrucción explícita porque existe el Garbage Collector (Recolector de Basura). Cuando el objeto Linea deja de ser referenciado, y si sus objetos Punto internos no están siendo usados por nadie más, el GC los identifica como inalcanzables y libera su memoria automáticamente.
+
+8. Departamento y Profesores (Invariantes y Arrays)
+Java
+public class Departamento {
+    private Profesor[] profesores = new Profesor[50];
+    private int numProfesores = 0;
+    private Profesor director;
+
+    public Departamento(Profesor directorInicial) {
+        if (directorInicial == null) throw new IllegalArgumentException("Debe haber un director");
+        this.director = directorInicial;
+        addProfesor(directorInicial);
+    }
+
+    public void addProfesor(Profesor p) {
+        if (numProfesores >= 50) throw new IllegalStateException("Departamento lleno");
+        profesores[numProfesores++] = p;
+    }
+
+    public void eliminarProfesor(int pos) {
+        if (pos < 0 || pos >= numProfesores) throw new IndexOutOfBoundsException();
+        if (profesores[pos] == director) throw new IllegalStateException("No puedes eliminar al director");
+        
+        // Desplazar array para no dejar huecos
+        for (int i = pos; i < numProfesores - 1; i++) {
+            profesores[i] = profesores[i+1];
+        }
+        profesores[--numProfesores] = null;
+    }
+
+    public void setDirector(Profesor nuevoDirector) {
+        // Verificar que el nuevo director ya esté en la lista
+        boolean estaEnLista = false;
+        for (int i = 0; i < numProfesores; i++) {
+            if (profesores[i] == nuevoDirector) { estaEnLista = true; break; }
+        }
+        if (!estaEnLista) throw new IllegalArgumentException("El director debe ser profesor del departamento");
+        this.director = nuevoDirector;
+    }
+
+    public int getNumProfesores() { return numProfesores; }
+    public Profesor getProfesor(int pos) { return profesores[pos]; }
+}
+9. Uso de List y Seguridad
+Al usar List<Profesor>, te ahorras la gestión manual del tamaño del array, el contador de elementos y el desplazamiento de elementos al borrar.
+Problema de seguridad: Si devuelves la lista interna (return profesores;), cualquier objeto externo podría añadir o borrar profesores sin pasar por las reglas del Departamento (rompiendo la encapsulación).
+Solución: Devolver una copia de la lista o usar Collections.unmodifiableList(profesores).
+
+10. Composición Recursiva
+Java
+public final class Persona {
+    private final String nombre;
+    private final Persona madre; // Composición recursiva
+
+    public Persona(String nombre, Persona madre) {
+        this.nombre = nombre;
+        this.madre = madre;
+    }
+
+    public static void main(String[] args) {
+        Persona abuela = new Persona("Ana", null);
+        Persona madre = new Persona("Berta", abuela);
+        Persona hijo = new Persona("Carlos", madre);
+    }
+}
+Otros ejemplos: Directorios (un directorio contiene archivos y otros directorios) o Menús (un menú tiene opciones y submenús).
+
+11. Relaciones Bidireccionales
+Significa que ambos objetos conocen al otro (el Departamento conoce a sus Profesores y el Profesor conoce a qué Departamento pertenece).
+Implementación:
+
+Añadir un atributo private Departamento depto en la clase Profesor.
+
+Al añadir un profesor al departamento (addProfesor), hay que actualizar el atributo del profesor: p.setDepartamento(this). Esto requiere cuidado extremo para no crear bucles infinitos o inconsistencias.
