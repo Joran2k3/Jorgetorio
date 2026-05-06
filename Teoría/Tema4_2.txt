@@ -1,0 +1,287 @@
+Respuesta 1: Concepto de Herencia y Ejemplo
+La herencia es un mecanismo de la programación orientada a objetos que permite crear una nueva clase (subclase) a partir de una existente (superclase). Establece una relación "A es-un B" (por ejemplo, un Artillero es un Soldado).
+
+Sus dos implicaciones principales son:
+
+Compatibilidad de tipos (Polimorfismo): Un objeto de la subclase puede ser tratado y referenciado como si fuera del tipo de la superclase.
+
+Herencia de estado y comportamiento: La subclase recibe automáticamente los atributos y métodos de la superclase, pudiendo añadir los suyos propios o modificar los heredados.
+
+Ejemplo en Java:
+
+Java
+// Superclase
+class Soldado {
+    private String nombre;
+
+    public Soldado(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void saludar() {
+        System.out.println("¡Se presenta el soldado " + nombre + "!");
+    }
+}
+
+// Subclase 1
+class Artillero extends Soldado {
+    private int cohetes;
+
+    public Artillero(String nombre, int cohetes) {
+        super(nombre);
+        this.cohetes = cohetes;
+    }
+
+    public int getCohetes() {
+        return cohetes;
+    }
+}
+
+// Subclase 2
+class Zapador extends Soldado {
+    private int minas;
+
+    public Zapador(String nombre, int minas) {
+        super(nombre);
+        this.minas = minas;
+    }
+
+    public int getMinas() {
+        return minas;
+    }
+}
+
+// Uso y compatibilidad de tipos
+public class Main {
+    public static void main(String[] args) {
+        // Array de tipo Soldado que contiene distintos subtipos
+        Soldado[] peloton = {
+            new Artillero("Pérez", 5),
+            new Zapador("López", 10),
+            new Soldado("García")
+        };
+
+        // Recorremos el array y todos saludan
+        for (Soldado s : peloton) {
+            s.saludar(); 
+        }
+    }
+}
+Respuesta 2: Constructores y super
+Al crear un objeto de una subclase, se ejecutan todos los constructores de la jerarquía, en orden de arriba hacia abajo (desde la clase base más alta hasta la subclase concreta).
+
+¿Qué significa super? Hace referencia al constructor de la clase padre inmediata.
+
+¿Debo llamar a super siempre? Si la clase padre tiene un constructor sin parámetros (por defecto o explícito), Java inserta la llamada a super() de forma invisible en la primera línea de tu constructor. Pero, si la clase padre solo tiene constructores con parámetros (como en el ejemplo anterior de Soldado), estás obligado a llamar a super(parametros) explícitamente en la primera línea del constructor de la subclase, o el código no compilará.
+
+Respuesta 3: Atributos privados en memoria
+Sí, los atributos privados de la superclase forman parte íntegra de la instancia de la subclase en la memoria RAM. Cuando haces un new Zapador("López", 10), en memoria se reserva espacio tanto para el atributo minas como para el atributo nombre.
+
+Sin embargo, que existan en memoria no implica que se puedan usar directamente desde el código de la subclase. Por estar marcados como private, el compilador prohíbe que un Zapador haga algo como this.nombre = "Juan". Para interactuar con ese dato, el Zapador debe usar los métodos públicos o protegidos que haya heredado de Soldado (como el método saludar(), que internamente sí tiene permiso para leer nombre).
+
+Respuesta 4: Extensibilidad
+La compatibilidad de tipos hace que el sistema sea altamente extensible (cumpliendo el principio Open-Closed). Puedes añadir nuevas funcionalidades sin tocar el código que ya funciona.
+
+Ilustración: Añadimos un Médico.
+
+Java
+class Medico extends Soldado {
+    public Medico(String nombre) {
+        super(nombre);
+    }
+    public void curar() {
+        System.out.println("Curando...");
+    }
+}
+
+// En el Main, añadimos el Médico al array:
+Soldado[] peloton = {
+    new Artillero("Pérez", 5),
+    new Zapador("López", 10),
+    new Medico("Sánchez") // Nuevo tipo introducido
+};
+
+// Este código NO SE MODIFICA en absoluto, sigue funcionando perfectamente
+for (Soldado s : peloton) {
+    s.saludar(); 
+}
+Respuesta 5: Referencias, Upcasting, Downcasting e instanceof
+¿Referencia del supertipo a objeto subtipo? Sí, es posible y es la base del polimorfismo (Soldado s = new Artillero(...)).
+
+¿Invocar métodos del subtipo? No. Con una referencia de tipo Soldado, el compilador solo te deja llamar a los métodos definidos en Soldado (como saludar()), incluso si el objeto real en memoria es un Artillero.
+
+Upcasting: Convertir una referencia de un subtipo a un supertipo. Es seguro e implícito (ocurre solo al meter el Artillero en el array de Soldado).
+
+Downcasting: Convertir una referencia de un supertipo a un subtipo. Es peligroso (puede lanzar ClassCastException si te equivocas de tipo) y debe ser explícito.
+
+instanceof: Es un operador que comprueba en tiempo de ejecución si un objeto pertenece a una clase específica.
+
+Ejemplo:
+
+Java
+for (Soldado s : peloton) {
+    s.saludar();
+    
+    // Comprobamos si el objeto real es un Artillero
+    if (s instanceof Artillero) {
+        // Downcasting explícito
+        Artillero a = (Artillero) s; 
+        System.out.println("   Tengo " + a.getCohetes() + " cohetes.");
+        
+        // En Java 16+ se puede hacer todo en una línea (Pattern Matching):
+        // if (s instanceof Artillero a) { System.out.println(a.getCohetes()); }
+    }
+}
+Respuesta 6: Acceso protected
+El acceso protected es un nivel de visibilidad intermedio. Significa que el atributo o método es visible para:
+
+La propia clase.
+
+Las subclases (herederas), independientemente de dónde estén.
+
+Cualquier otra clase que esté en el mismo paquete (package).
+
+Ejemplo en Java:
+
+Java
+class Soldado {
+    // Ahora es protected en lugar de private
+    protected String nombre; 
+
+    public Soldado(String nombre) {
+        this.nombre = nombre;
+    }
+}
+
+class Zapador extends Soldado {
+    private int minas;
+
+    public Zapador(String nombre, int minas) {
+        super(nombre);
+        this.minas = minas;
+    }
+
+    public void ponerBomba() {
+        // El Zapador puede acceder directamente a "nombre" porque es protected
+        System.out.println("El zapador " + this.nombre + " ha puesto una mina.");
+        this.minas--;
+    }
+}
+Respuesta 7: La clase base universal
+¿Hay una clase base universal? Depende del lenguaje.
+
+¿Ocurre en todos? No. C++ no tiene una clase base universal (puedes crear clases que no heredan de nada).
+
+¿Qué ocurre en Java? Sí. En Java todas las clases heredan, directa o indirectamente, de la clase java.lang.Object. Si no pones extends en una clase, Java asume implícitamente extends Object.
+
+Respuesta 8: Herencia múltiple
+La herencia múltiple ocurre cuando una clase hereda el estado y comportamiento de más de una superclase a la vez.
+
+¿Existe en Java? No para las clases. Una clase en Java solo puede hacer extends de una única clase (para evitar el "Problema del Diamante", donde hay ambigüedad sobre qué método heredar si dos padres tienen métodos con el mismo nombre). Sin embargo, Java permite herencia múltiple de interfaces (una clase puede hacer implements de múltiples interfaces).
+
+Respuesta 9: Excepciones personalizadas
+Java
+// Clase Usuario de ejemplo
+class Usuario {
+    private String username;
+    public Usuario(String username) { this.username = username; }
+    public String getUsername() { return username; }
+}
+
+// Excepción no controlada (hereda de RuntimeException)
+public class UsuarioNoEncontradoException extends RuntimeException {
+    
+    // Composición: guardamos el objeto que dio el problema
+    private Usuario usuario;
+
+    // Constructor básico
+    public UsuarioNoEncontradoException(String mensaje, Usuario usuario) {
+        super(mensaje);
+        this.usuario = usuario;
+    }
+
+    // Sobrecarga: Constructor con la causa subyacente
+    public UsuarioNoEncontradoException(String mensaje, Usuario usuario, Throwable causa) {
+        super(mensaje, causa);
+        this.usuario = usuario;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+}
+Respuesta 10: Herencia vs. Composición (Reutilización)
+No se debe usar herencia solo para reutilizar código porque la herencia es un acoplamiento muy fuerte que establece semántica. Si la clase A hereda de B solo para usar un par de métodos, pero A no es un B lógicamente, estás ensuciando la interfaz pública de A. Todo el código que espera un B aceptará un A, lo cual puede provocar comportamientos absurdos o errores lógicos graves.
+
+Respuesta 11: "Favorecer la composición frente a la herencia"
+Se recomienda esto porque la composición ("Tiene-un") es mucho más flexible que la herencia.
+
+Dinámico vs Estático: Las relaciones de herencia se definen en tiempo de compilación y no pueden cambiar. Con la composición, puedes cambiar el comportamiento en tiempo de ejecución (cambiando el objeto compuesto).
+
+Acoplamiento débil: Evita crear jerarquías de clases profundas, frágiles y difíciles de mantener.
+
+Encapsulación intacta: Al componer, usas los objetos a través de sus interfaces públicas, respetando sus límites.
+
+Respuesta 12: "La herencia rompe la encapsulación"
+Se dice esto porque una subclase depende directamente de los detalles de implementación de su superclase. Si cambias el código interno de un método en la superclase, puedes alterar inadvertidamente el comportamiento de las subclases (esto se conoce como el problema de la Clase Base Frágil). La superclase y la subclase están fuertemente acopladas.
+
+Respuesta 13: Ejemplo Herencia vs Composición
+Alternativa 1: Mediante Herencia
+
+Java
+// Superclase
+class Persona {
+    protected String dni;
+    protected String nombre;
+
+    public Persona(String dni, String nombre) {
+        this.dni = dni;
+        this.nombre = nombre;
+    }
+}
+
+// Subclases
+class Estudiante extends Persona {
+    public Estudiante(String dni, String nombre) {
+        super(dni, nombre);
+    }
+}
+
+class Trabajador extends Persona {
+    public Trabajador(String dni, String nombre) {
+        super(dni, nombre);
+    }
+}
+Alternativa 2: Mediante Composición (Recomendada)
+
+Java
+// Clase componente
+class DatosPersonales {
+    private String dni;
+    private String nombre;
+
+    public DatosPersonales(String dni, String nombre) {
+        this.dni = dni;
+        this.nombre = nombre;
+    }
+    // Getters y setters correspondientes...
+}
+
+// Clases que componen
+class Estudiante {
+    // El Estudiante "tiene-unos" Datos Personales
+    private DatosPersonales datos; 
+
+    public Estudiante(DatosPersonales datos) {
+        this.datos = datos;
+    }
+}
+
+class Trabajador {
+    // El Trabajador "tiene-unos" Datos Personales
+    private DatosPersonales datos;
+
+    public Trabajador(DatosPersonales datos) {
+        this.datos = datos;
+    }
+}
